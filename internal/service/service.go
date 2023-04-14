@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/redis/go-redis/v9"
+	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
 	//import entity
 )
 
@@ -15,7 +16,7 @@ func NewService(redisClient *redis.Client) *Service {
 	}
 }
 
-func (s *Service) ProcessMessage() error {
+func (s *Service) ProcessMessage(message entity.Message) error {
 
 	return nil
 }

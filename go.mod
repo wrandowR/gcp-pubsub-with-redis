@@ -1,4 +1,4 @@
-module gcp-pubsub-with-redis
+module github.com/wrandowR/gcp-pubsub-with-redis
 
 go 1.19
 
