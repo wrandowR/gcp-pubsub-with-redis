@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/redis/go-redis/v9"
+	//import entity
 )
 
 type Service struct {
@@ -14,7 +15,7 @@ func NewService(redisClient *redis.Client) *Service {
 	}
 }
 
-func (s *Service) ProcessMessage(message entity.Message) error {
+func (s *Service) ProcessMessage() error {
 
 	return nil
 }
