@@ -1,6 +1,9 @@
 package service
 
 import (
+	"context"
+	"time"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
 	//import entity
@@ -16,7 +19,22 @@ func NewService(redisClient *redis.Client) *Service {
 	}
 }
 
-func (s *Service) ProcessMessage(message entity.Message) error {
+// ProcessMessage process the message and save it to redis, any logic with the message can be added here
+func (s *Service) ProcessMessage(ctx context.Context, message *entity.Message) error {
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	key := message.ID + "-key"
+
+	result, err := s.RedisClient.Set(ctx, key, message.Message, 0).Result()
+	if err != nil {
+		return err
+	}
+	if result != "OK" {
+		//por validar
+		return err
+	}
 
 	return nil
 }

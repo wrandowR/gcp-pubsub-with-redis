@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/wrandowR/gcp-pubsub-with-redis/cmd/config"
+	"github.com/wrandowR/gcp-pubsub-with-redis/internal/clients"
 )
 
 //La idea es iniciar un server que siempre este escuchando un pub/sub de gcp
@@ -12,6 +15,13 @@ import (
 func main() {
 
 	ctx := context.Background()
+	if err := config.ReadConfig(); err != nil {
+		panic(err)
+	}
+
+	if err := clients.NewRedisClient(ctx); err != nil {
+		panic(err)
+	}
 
 	for {
 

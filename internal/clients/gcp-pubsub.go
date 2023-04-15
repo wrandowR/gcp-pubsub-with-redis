@@ -1,20 +1,40 @@
 package clients
 
+import (
+	"context"
+	"fmt"
+	"io"
+	"sync/atomic"
+	"time"
+
+	"cloud.google.com/go/pubsub"
+)
+
+type GCPClient struct {
+	Subscription *pubsub.Subscription
+}
+
 var GCPProjectID = "gcp-project-id"
 var GCPSubscriptionID = "gcp-subscription-id"
 
-/*
-func pullMsgs(w io.Writer, projectID, subID string) error {
-	// projectID := "my-project-id"
-	// subID := "my-sub"
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, projectID)
+func NewGCPClient(ctx context.Context) (*GCPClient, error) {
+	client, err := pubsub.NewClient(ctx, GCPProjectID)
 	if err != nil {
-		return fmt.Errorf("pubsub.NewClient: %v", err)
+		return nil, fmt.Errorf("pubsub.NewClient: %v", err)
 	}
 	defer client.Close()
 
-	sub := client.Subscription(subID)
+	sub := client.Subscription(GCPSubscriptionID)
+
+	return &GCPClient{
+		Subscription: sub,
+	}, nil
+
+}
+
+func (g *GCPClient) pullMsgs(w io.Writer, projectID, subID string) error {
+	// projectID := "my-project-id"
+	// subID := "my-sub"
 
 	// Receive messages for 10 seconds, which simplifies testing.
 	// Comment this out in production, since `Receive` should
@@ -35,4 +55,3 @@ func pullMsgs(w io.Writer, projectID, subID string) error {
 
 	return nil
 }
-*/
