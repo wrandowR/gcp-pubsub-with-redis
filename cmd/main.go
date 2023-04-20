@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/wrandowR/gcp-pubsub-with-redis/cmd/config"
 	"github.com/wrandowR/gcp-pubsub-with-redis/internal/clients"
+	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
 )
 
 //La idea es iniciar un server que siempre este escuchando un pub/sub de gcp
@@ -23,32 +23,34 @@ func main() {
 		panic(err)
 	}
 
+	GCPClient, err := clients.NewGCPClient(ctx)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+
+	ch := make(chan entity.Message)
+
+	go func() {
+		err = GCPClient.PullMsgs(ctx, ch)
+		if err != nil {
+			ctx.Done()
+		}
+	}()
+
 	for {
 
 		select {
 		case <-ctx.Done():
 			return
+		case msg := <-ch:
 
-		default:
-			fmt.Println("Server running")
-			//timeout
-			time.Sleep(3 * time.Second)
+			if err := clients.StoreMessages(ctx, &msg); err != nil {
+				fmt.Println("Error storing message in redis", err)
+			}
 
+			fmt.Println("Message received:", msg)
 		}
-
-		fmt.Println("Server started")
-
 	}
+
 }
-
-//Que necesito?
-//1. Conectar a redis
-//2. Conectar a pub/sub de gcp
-//3. Procesar el mensaje
-//4. Guardar el mensaje en redis
-//5. Crear un server que este escuchando el pub/sub de gcp
-//6. Crear un server que este escuchando el pub/sub de gcp y que este corriendo en un docker
-
-//depronto kubernetes
-
-//que arquitectura usar?

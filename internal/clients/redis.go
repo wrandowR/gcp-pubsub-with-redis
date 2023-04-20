@@ -2,8 +2,10 @@ package clients
 
 import (
 	"context"
+	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
 )
 
 var RedisClient *redis.Client
@@ -21,5 +23,25 @@ func NewRedisClient(ctx context.Context) error {
 	}
 
 	RedisClient = rdb
+	return nil
+}
+
+// StoreMessages stores the message in redis, #por mejorar
+func StoreMessages(ctx context.Context, message *entity.Message) error {
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	key := message.ID + "-key"
+
+	result, err := RedisClient.Set(ctx, key, message.Message, 0).Result()
+	if err != nil {
+		return err
+	}
+
+	if result != "OK" {
+		return err
+	}
+
 	return nil
 }

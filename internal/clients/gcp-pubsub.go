@@ -3,26 +3,25 @@ package clients
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync/atomic"
 	"time"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
 )
 
 type GCPClient struct {
 	Subscription *pubsub.Subscription
 }
 
-var GCPProjectID = "gcp-project-id"
-var GCPSubscriptionID = "gcp-subscription-id"
+var GCPProjectID = ""
+var GCPSubscriptionID = ""
 
 func NewGCPClient(ctx context.Context) (*GCPClient, error) {
 	client, err := pubsub.NewClient(ctx, GCPProjectID)
 	if err != nil {
 		return nil, fmt.Errorf("pubsub.NewClient: %v", err)
 	}
-	defer client.Close()
 
 	sub := client.Subscription(GCPSubscriptionID)
 
@@ -32,26 +31,27 @@ func NewGCPClient(ctx context.Context) (*GCPClient, error) {
 
 }
 
-func (g *GCPClient) pullMsgs(w io.Writer, projectID, subID string) error {
-	// projectID := "my-project-id"
-	// subID := "my-sub"
-
-	// Receive messages for 10 seconds, which simplifies testing.
-	// Comment this out in production, since `Receive` should
-	// be used as a long running operation.
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+func (g *GCPClient) PullMsgs(ctx context.Context, ch chan entity.Message) error {
 
 	var received int32
-	err = sub.Receive(ctx, func(_ context.Context, msg *pubsub.Message) {
-		fmt.Fprintf(w, "Got message: %q\n", string(msg.Data))
+	err := g.Subscription.Receive(ctx, func(_ context.Context, msg *pubsub.Message) {
+
+		defer msg.Ack()
+
+		fmt.Println("Got message:", string(msg.Data))
 		atomic.AddInt32(&received, 1)
-		msg.Ack()
+
+		ch <- entity.Message{
+			ID:      fmt.Sprint(received),
+			Date:    time.Now().String(),
+			Message: string(msg.Data),
+		}
 	})
 	if err != nil {
 		return fmt.Errorf("sub.Receive: %v", err)
 	}
-	fmt.Fprintf(w, "Received %d messages\n", received)
+
+	fmt.Println("Received messages", received)
 
 	return nil
 }
