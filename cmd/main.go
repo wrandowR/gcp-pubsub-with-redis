@@ -7,6 +7,7 @@ import (
 	"github.com/wrandowR/gcp-pubsub-with-redis/cmd/config"
 	"github.com/wrandowR/gcp-pubsub-with-redis/internal/clients"
 	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
+	"github.com/wrandowR/gcp-pubsub-with-redis/internal/service"
 )
 
 //La idea es iniciar un server que siempre este escuchando un pub/sub de gcp
@@ -29,6 +30,8 @@ func main() {
 		panic(err)
 	}
 
+	service := service.NewService(clients.RedisClient)
+
 	ch := make(chan entity.Message)
 
 	go func() {
@@ -45,11 +48,10 @@ func main() {
 			return
 		case msg := <-ch:
 
-			if err := clients.StoreMessages(ctx, &msg); err != nil {
-				fmt.Println("Error storing message in redis", err)
+			if err := service.ProcessMessage(ctx, &msg); err != nil {
+				fmt.Println(err)
 			}
 
-			fmt.Println("Message received:", msg)
 		}
 	}
 
