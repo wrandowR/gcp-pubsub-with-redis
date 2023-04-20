@@ -30,12 +30,12 @@ func main() {
 		panic(err)
 	}
 
-	service := service.NewService(clients.RedisClient)
+	service := service.NewService(clients.RedisClient, GCPClient.Subscription)
 
 	ch := make(chan entity.Message)
 
 	go func() {
-		err = GCPClient.PullMsgs(ctx, ch)
+		err = service.PullMsgs(ctx, ch)
 		if err != nil {
 			ctx.Done()
 		}

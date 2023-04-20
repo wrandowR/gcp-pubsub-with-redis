@@ -3,11 +3,8 @@ package clients
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
-	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/wrandowR/gcp-pubsub-with-redis/internal/entity"
 )
 
 type GCPClient struct {
@@ -24,34 +21,16 @@ func NewGCPClient(ctx context.Context) (*GCPClient, error) {
 	}
 
 	sub := client.Subscription(GCPSubscriptionID)
+	exist, err := sub.Exists(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("sub.Exists: %v", err)
+	}
+	if !exist {
+		return nil, fmt.Errorf("sub not exist: %v", err)
+	}
 
 	return &GCPClient{
 		Subscription: sub,
 	}, nil
 
-}
-
-func (g *GCPClient) PullMsgs(ctx context.Context, ch chan entity.Message) error {
-
-	var received int32
-	err := g.Subscription.Receive(ctx, func(_ context.Context, msg *pubsub.Message) {
-
-		defer msg.Ack()
-
-		fmt.Println("Got message:", string(msg.Data))
-		atomic.AddInt32(&received, 1)
-
-		ch <- entity.Message{
-			ID:      fmt.Sprint(received),
-			Date:    time.Now().String(),
-			Message: string(msg.Data),
-		}
-	})
-	if err != nil {
-		return fmt.Errorf("sub.Receive: %v", err)
-	}
-
-	fmt.Println("Received messages", received)
-
-	return nil
 }
